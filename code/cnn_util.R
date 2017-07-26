@@ -7,7 +7,7 @@ library(readr)
 str.manipulate <- function(x, max.text.lenght=500){
   x <- substr(x, 1, max.text.lenght)
   Encoding(x) <- "UTF-8"
-  x <- toLower(x)
+  x <- char_tolower(x)
   return(x)
 }
 
@@ -25,14 +25,14 @@ text.encoder.csv <- function(input.file, output.file, alphabet, max.text.lenght,
   #read file
   if(verbose) cat("Read input file\n")
   dt <- read_csv(input.file, 
-                 col_names = c('V1','V2', 'V3'),
-                 col_types = "icc",
+                 col_names = c('V1','V2','V3','V4'),
+                 col_types = "iccc",
                  n_max = Inf
   )
-  
+  dt = dt[2:dim(dt)[1],]
   #split label and data
-  ysplit <- dt$V1
-  dt <- with(dt, paste(V2, V3, sep=""))
+  ysplit <- as.numeric(as.factor(dt$V2))
+  dt <- with(dt, V4)
   dt <- str.manipulate(dt, max.text.lenght)
   
   #map text to number
@@ -73,4 +73,12 @@ dict.decoder <- function(data, alphabet, feature.len, batch.size){
   feature.matrix
 }
 
-
+predictSingle<-function(model, words){#}, feature.len,vocab.size){
+	data.map <- map.text.to.number(str.manipulate(words, max.text.lenght), alphabet, nomatch=0)
+    im <- matrix(0L, feature.len, vocab.size)
+    for(i in 1:feature.len){
+      im[i,data.map[[1]][i]] <- 1L
+    }
+  	dim(im) <- c(feature.len, vocab.size, 1,  1)
+	predict(model,im)
+}
